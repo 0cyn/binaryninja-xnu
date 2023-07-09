@@ -27,6 +27,7 @@ BINARYNINJAPLUGIN bool CorePluginInit() {
 
     return true;
 }
+
 #ifdef UI_BUILD
 BINARYNINJAPLUGIN bool UIPluginInit() {
 

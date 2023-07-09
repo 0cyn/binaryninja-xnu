@@ -1294,40 +1294,9 @@ class DarwinKernelWorkflow {
 public:
     static void RewritePacInstructions(Ref<AnalysisContext> ctx);
     static void FixBrokenSIMD(Ref<AnalysisContext> ctx);
-    static void DontJump(Ref<AnalysisContext> ctx);
 
     static void Register();
 };
 
 
 #endif //KSUITE_DARWINKERNEL_H
-
-
-
-/*!
- *
-                    auto nonSSALLILIndex = ssa->GetNonSSAInstructionIndex(insnIndex);
-                    auto startIndex = nonSSALLILIndex-1;
-
-                    auto curInstruction = llil->GetInstruction(startIndex);
-                    while (curInstruction.operation == LLIL_SET_REG && curInstruction.GetOperands().size()
-                           && (curInstruction.GetOperands()[0].GetRegister() == x16
-                               || curInstruction.GetOperands()[0].GetRegister() == x17))
-                    {
-                        startIndex--;
-                        curInstruction = llil->GetInstruction(startIndex);
-                    }
-
-                    startIndex++;
-
-                    while (startIndex < nonSSALLILIndex)
-                    {
-                        curInstruction = llil->GetInstruction(startIndex);
-                        if (curInstruction.operation != LLIL_SET_REG) {
-                            LogError("Non Set Reg; unhandled");
-                            startIndex++;
-                            continue;
-                        }
-                        startIndex++;
-                    }
- */

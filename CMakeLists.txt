@@ -1,48 +1,59 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 # Plugin Name
-set(PLUGIN_NAME darwinkernelutils)
+set(PLUGIN_NAME binaryninja-xnu)
 
-# You may need to replace this with your path
-set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.4.1/clang_64/lib/cmake")
+if (UI_BUILD)
+    # You may need to replace this with your path
+    set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.4.1/clang_64/lib/cmake")
+endif()
 
 # Non-user-serviceable parts below ---------------------------------------------
+
+if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
+endif ()
 
 project(${PLUGIN_NAME})
 
 # BinaryNinja API Directory
-set(BINJA_API_DIR ${PROJECT_SOURCE_DIR}/binja)
+set(BINJA_API_DIR ${PROJECT_SOURCE_DIR}/binaryninja-api)
 
-add_subdirectory(libkbinja)
-# add_subdirectory(Views)
-
+add_subdirectory(${BINJA_API_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+set(UI_PLUGIN_SOURCES )
+set(UI_PLUGIN_LIBRARIES )
+set(UI_COMPILE_DEFS )
 
-set(CMAKE_REQUIRED_LINK_OPTIONS "-arch arm64")
-set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE INTERNAL "" FORCE)
+if (UI_BUILD)
 
-set(PLUGIN_SOURCE Standalone.cpp
-        UI/TypeSetter.cpp UI/TypeSetter.h UI/Types.h
-        Workflows/DarwinKernel.cpp Workflows/DarwinKernel.h)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    set(CMAKE_AUTOUIC ON)
+
+    set(UI_PLUGIN_SOURCES UI/TypeSetter.cpp UI/TypeSetter.h)
+    set(UI_PLUGIN_LIBRARIES binaryninjaui Qt6::Core Qt6::Gui Qt6::Widgets)
+    set(UI_COMPILE_DEFS UI_BUILD=1)
+
+    find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
+
+    find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)
+    find_package(Qt6 COMPONENTS Widgets REQUIRED)
+
+endif()
+
+set(PLUGIN_SOURCE Standalone.cpp Workflows/DarwinKernel.cpp Workflows/DarwinKernel.h ${UI_PLUGIN_SOURCES})
+
 set("${CMAKE_C_FLAGS} -include${PROJECT_SOURCE_DIR}/Prefix.h")
 
-find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
-
-find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)
-find_package(Qt6 COMPONENTS Widgets REQUIRED)
-
 add_library(${PLUGIN_NAME} SHARED ${PLUGIN_SOURCE})
-target_link_libraries(${PLUGIN_NAME} binaryninjaapi binaryninjaui libkbinja Qt6::Core Qt6::Gui Qt6::Widgets)
+
 target_compile_features(${PLUGIN_NAME} PRIVATE cxx_std_20 c_std_99)
-target_compile_definitions(${PLUGIN_NAME} PRIVATE
-        DEV_MODE=${DEV_MODE})
-target_include_directories(${PLUGIN_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Shared/cereal/include ${PROJECT_SOURCE_DIR}/API)
-# Library targets linking against the Binary Ninja API need to be compiled with
-# position-independent code on Linux.
+target_compile_definitions(${PLUGIN_NAME} PRIVATE DEV_MODE=${DEV_MODE} ${UI_COMPILE_DEFS})
+
+target_link_libraries(${PLUGIN_NAME} binaryninjaapi libkbinja ${UI_PLUGIN_LIBRARIES})
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     target_compile_options(${PLUGIN_NAME} PRIVATE "-fPIC")
 endif()
@@ -50,11 +61,17 @@ endif()
 list(APPEND fcl ${PLUGIN_SOURCE})
 list(LENGTH fcl file_count)
 message(STATUS "")
-message(STATUS "BinaryNinja UI Plugin Config -=-=-=-======")
+
+if (UI_BUILD)
+    message(STATUS "BinaryNinja UI Plugin Config -=-=-=-======")
+else()
+    message(STATUS "BinaryNinja Headless Plugin Config -=-=-=-======")
+endif()
+
 message(STATUS "Project Name: ${PLUGIN_NAME}")
 message(STATUS "Tracked Source Files: ${file_count}")
-# message(STATUS "${SRC_FILES}")
 message(STATUS "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-======")
+
 message(STATUS "")
 
 # Support cmake --install
