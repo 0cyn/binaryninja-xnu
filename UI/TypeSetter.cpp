@@ -67,7 +67,7 @@ bool TypeSetter::CreateForContext(UIActionContext ctx)
     if (!classType)
     {
         auto cTBuilder = StructureBuilder();
-        cTBuilder.AddMember(Type::PointerType(8, Type::VoidType()), "vtable");
+        cTBuilder.AddMember(Type::PointerType(8, Type::VoidType()), "vptr");
         auto stru = cTBuilder.Finalize();
         QualifiedName struName = QualifiedName(className);
         Ref<Type> struType = Type::StructureType(stru);
