@@ -1,6 +1,9 @@
-//
-// Created by kat on 7/9/23.
-//
+// -===-=
+// Bootstrap for binaryninja-xnu when installed as a standalone plugin
+// -===-=
+#ifdef KSUITE
+#error "This file should not be built as a part of parent projects! Please fix your build scripts!"
+#endif
 
 #include <binaryninjaapi.h>
 
@@ -10,8 +13,38 @@
 #ifdef UI_BUILD
 #include "uitypes.h"
 #include "UI/TypeSetter.h"
+#include "uicontext.h"
+
 #endif
 
+#ifdef UI_BUILD
+
+#define ACTION_PREFIX "XNU Tools\\"
+
+#define MAKE_ACTION_NAME(component, action) QString::fromStdString(std::string(ACTION_PREFIX) + #component + "\\" + #action)
+
+namespace BinaryNinjaXNU {
+
+    class Notifications : public UIContextNotification {
+        inline static Notifications* m_instance;
+
+    public:
+        virtual void OnContextOpen(UIContext* context) override
+        {
+            context->globalActions()->bindAction(MAKE_ACTION_NAME(Types, External Method), UIAction([](const UIActionContext& ctx){
+                TypeSetter::CreateForContext(ctx);
+            }));
+        }
+        static void init()
+        {
+            m_instance = new Notifications;
+            UIContext::registerNotification(m_instance);
+        }
+    };
+}
+
+
+#endif
 
 extern "C" {
 
@@ -30,6 +63,8 @@ BINARYNINJAPLUGIN bool CorePluginInit() {
 
 #ifdef UI_BUILD
 BINARYNINJAPLUGIN bool UIPluginInit() {
+
+    BinaryNinjaXNU::Notifications::init();
 
     return true;
 }
