@@ -3,7 +3,16 @@
 Early WIP
 
 this will expand as I continue to burrow through kernel documentation/write-ups/code in an effort to understand
-everything I'm doing here. consider this an effort to make my 'homework' take a form useful to other people
+everything I'm doing here. 
+
+### Build
+
+```shell
+mkdir -p build && cd build
+# For headless builds, omit -DUI_BUILD=ON argument entirely or set it to OFF
+cmake -DCMAKE_BUILD_TYPE=Release -DUI_BUILD=ON ../
+cmake --build . --target=install -j 8 
+```
 
 ### Current Feature Set
 

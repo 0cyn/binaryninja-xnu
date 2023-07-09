@@ -5,6 +5,10 @@
 #error "This file should not be built as a part of parent projects! Please fix your build scripts!"
 #endif
 
+#ifndef NDEBUG
+#warning "Debug Build"
+#endif
+
 #include <binaryninjaapi.h>
 
 // Core
