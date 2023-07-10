@@ -36,7 +36,18 @@ namespace BinaryNinjaXNU {
         virtual void OnContextOpen(UIContext* context) override
         {
             context->globalActions()->bindAction(MAKE_ACTION_NAME(Types, External Method), UIAction([](const UIActionContext& ctx){
-                TypeSetter::CreateForContext(ctx);
+                auto type = TypeSetter::ClassTypeForContext(ctx);
+                if (type)
+                {
+                    TypeSetter::TypeWithExternalMethod(ctx.binaryView, ctx.function, type);
+                }
+            }));
+            context->globalActions()->bindAction(MAKE_ACTION_NAME(Types, Set this), UIAction([](const UIActionContext& ctx){
+                auto type = TypeSetter::ClassTypeForContext(ctx);
+                if (type)
+                {
+                    TypeSetter::SetThisArgType(ctx.binaryView, ctx.function, type);
+                }
             }));
         }
         static void init()

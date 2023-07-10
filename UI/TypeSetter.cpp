@@ -24,14 +24,14 @@ std::vector<std::string> split(const std::string& s, char seperator)
     return output;
 }
 
-bool TypeSetter::CreateForContext(UIActionContext ctx)
+Ref<Type> TypeSetter::ClassTypeForContext(UIActionContext ctx)
 {
     auto data = ctx.binaryView;
     if (!data)
-        return false;
+        return nullptr;
     auto func = ctx.function;
     if (!func)
-        return false;
+        return nullptr;
 
     auto storedData = new TypeSetterViewMetadata;
     if (auto metadata = data->QueryMetadata(TypeSetterViewMetadataKey))
@@ -48,7 +48,7 @@ bool TypeSetter::CreateForContext(UIActionContext ctx)
     if (className.empty())
     {
         if (!BinaryNinja::GetTextLineInput(className, "Class Name", "Class Name"))
-            return false;
+            return nullptr;
     }
 
     auto undoID = data->BeginUndoActions();
@@ -76,6 +76,16 @@ bool TypeSetter::CreateForContext(UIActionContext ctx)
         storedData->classes.push_back(className);
         storedData->classQualNames[className] = assignedName.GetString();
     }
+    data->CommitUndoActions(undoID);
+    data->StoreMetadata(TypeSetterViewMetadataKey, storedData->AsMetadata());
+
+    return classType;
+}
+
+
+bool TypeSetter::TypeWithExternalMethod(Ref<BinaryView> data, Ref<Function> func, Ref<Type> type)
+{
+    auto undoID = data->BeginUndoActions();
 
     Ref<Type> ioReturnType = data->GetTypeByName(QualifiedName("IOReturn"));
     if (!ioReturnType)
@@ -99,7 +109,7 @@ bool TypeSetter::CreateForContext(UIActionContext ctx)
     }
 
     auto funcTypeBuilder = TypeBuilder::FunctionType(ioReturnType, func->GetCallingConvention(),
-                                                     {FunctionParameter("target", Type::PointerType(8, classType)),
+                                                     {FunctionParameter("target", Type::PointerType(8, type)),
                                                       FunctionParameter("reference", Type::PointerType(8, Type::VoidType())),
                                                       FunctionParameter("args", Type::PointerType(8, argsType))});
 
@@ -110,11 +120,36 @@ bool TypeSetter::CreateForContext(UIActionContext ctx)
         func->SetUserType(funcType);
     }
 
-    data->StoreMetadata(TypeSetterViewMetadataKey, storedData->AsMetadata());
-
     func->Reanalyze();
 
     data->CommitUndoActions(undoID);
 
     return true;
+}
+
+bool TypeSetter::SetThisArgType(Ref<BinaryView> data, Ref<Function> func, Ref<Type> type)
+{
+    auto undoID = data->BeginUndoActions();
+
+    auto params = func->GetParameterVariables();
+    if (params->empty())
+    {
+        auto funcTypeBuilder = TypeBuilder::FunctionType(func->GetReturnType(), func->GetCallingConvention(),
+                                                         {FunctionParameter("this", Type::PointerType(8, type))});
+
+        auto funcType = funcTypeBuilder.Finalize();
+
+        if (funcType)
+        {
+            func->SetUserType(funcType);
+        }
+        func->Reanalyze();
+        data->CommitUndoActions(undoID);
+        return true;
+    }
+
+    func->CreateUserVariable(params->at(0), Type::PointerType(8, type), "this");
+
+    func->Reanalyze();
+    data->CommitUndoActions(undoID);
 }

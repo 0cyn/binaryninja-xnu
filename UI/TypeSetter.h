@@ -32,7 +32,10 @@ struct TypeSetterViewMetadata : public MetadataSerializable
 class TypeSetter
 {
 public:
-    static bool CreateForContext(UIActionContext ctx);
+    static Ref<Type> ClassTypeForContext(UIActionContext ctx);
+    static bool TypeWithExternalMethod(Ref<BinaryView> data, Ref<Function> func, Ref<Type> type);
+    static bool SetThisArgType(Ref<BinaryView> data, Ref<Function> func, Ref<Type> type);
+
 };
 
 
