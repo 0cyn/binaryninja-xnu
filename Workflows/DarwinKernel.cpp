@@ -5,13 +5,7 @@
 #include "DarwinKernel.h"
 #include "lowlevelilinstruction.h"
 
-
-typedef __int128 int128_t;
-typedef unsigned __int128 uint128_t;
-
-
 union vreg {
-    uint128_t raw;
     uint64_t smaller[2];
     uint8_t fields[16];
 };
@@ -42,7 +36,7 @@ void DarwinKernelWorkflow::FixBrokenSIMD(Ref<AnalysisContext> ctx)
                 if (insn.operation != LLIL_SET_REG)
                     continue;
 
-                if ((insn.GetDestRegister() >= REG_V0_B0 && insn.GetDestRegister() <= REG_V29_B15) && ((insn.GetDestRegister() - REG_V0_B0) % 16) == 0)
+                if ((insn.GetDestRegister() >= 259 && insn.GetDestRegister() <= 738) && ((insn.GetDestRegister() - 259) % 16) == 0)
                 {
                     auto dat = bv->ReadBuffer(insn.address, 4);
                     std::vector<InstructionTextToken> result;
@@ -51,7 +45,7 @@ void DarwinKernelWorkflow::FixBrokenSIMD(Ref<AnalysisContext> ctx)
                     if (result.at(0).text != "movi")
                         continue;
 
-                    auto newDest = ((insn.GetDestRegister() - REG_V0_B0) / 16) + (REG_V0);
+                    auto newDest = ((insn.GetDestRegister() - 259) / 16) + (67);
                     auto newConstEntry = llil->GetExpr(insn.operands[1]).operands[0];
 
                     vreg newConst;

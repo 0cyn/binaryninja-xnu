@@ -6,11 +6,6 @@ set(PLUGIN_NAME binaryninja-xnu)
 set(PLUGIN_SOURCE Standalone.cpp Workflows/DarwinKernel.cpp Workflows/DarwinKernel.h )
 set(UI_PLUGIN_SOURCE UI/TypeSetter.cpp UI/TypeSetter.h )
 
-if (UI_BUILD)
-    # You may need to replace this with your path
-    set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.4.1/clang_64/lib/cmake")
-endif()
-
 # Non-user-serviceable parts below ---------------------------------------------
 
 if (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Darwin")
@@ -31,12 +26,23 @@ set(UI_COMPILE_DEFS )
 
 if (UI_BUILD)
 
+    if(NOT DEFINED CMAKE_PREFIX_PATH)
+        if(APPLE)
+            set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.4.3/clang_64/lib/cmake")
+        elseif(MSVC) # doesnt work on gh runners
+            set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.4.3/msvc2022_64/lib/cmake")
+        else()
+            set(CMAKE_PREFIX_PATH "$ENV{HOME}/Qt/6.4.3/gcc_64/lib/cmake")
+        endif()
+    endif()
+
+    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_AUTORCC ON)
     set(CMAKE_AUTOUIC ON)
 
     set(_UI_PLUGIN_SOURCES ${UI_PLUGIN_SOURCE})
-    set(UI_PLUGIN_LIBRARIES binaryninjaui Qt6::Core Qt6::Gui Qt6::Widgets)
+    set(UI_PLUGIN_LIBRARIES Qt6::Core Qt6::Gui Qt6::Widgets)
     set(UI_COMPILE_DEFS UI_BUILD=1)
 
     find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
@@ -52,9 +58,16 @@ set("${CMAKE_C_FLAGS} -include${PROJECT_SOURCE_DIR}/ProjectDefinitions.h")
 
 add_library(${PLUGIN_NAME} SHARED ${_PLUGIN_SOURCE})
 
-target_compile_features(${PLUGIN_NAME} PRIVATE cxx_std_20 c_std_99)
+set(CMAKE_CXX_STANDARD 17)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE DEV_MODE=${DEV_MODE} ${UI_COMPILE_DEFS})
 
+if(APPLE)
+    target_link_options(${PLUGIN_NAME} PUBLIC -undefined dynamic_lookup)
+elseif(MSVC)
+    target_link_options(${PLUGIN_NAME} PUBLIC "LINKER:/FORCE:UNRESOLVED")
+else()
+    target_link_options(${PLUGIN_NAME} PUBLIC "LINKER:--allow-shlib-undefined")
+endif()
 target_link_libraries(${PLUGIN_NAME} binaryninjaapi ${UI_PLUGIN_LIBRARIES})
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")

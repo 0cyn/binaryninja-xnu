@@ -1,0 +1,43 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "default-release",
+      "displayName": "Default x64 Release",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "description": "Release build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "UI_BUILD": "ON"
+      }
+    },
+    {
+      "name": "default-release-windows-latest",
+      "inherits": "default-release",
+      "displayName": "Default x64 Release",
+      "description": "Release x64 build using the default generator",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "C:/Users/runneradmin/Qt/6.4.3/msvc2022_64/lib/cmake"
+      }
+    },
+    {
+      "name": "default-release-macos-latest",
+      "inherits": "default-release",
+      "displayName": "Default x64 Release",
+      "description": "Release x64 build using the default generator",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/Users/runner/Qt/6.4.3/clang_64/lib/cmake"
+      }
+    },
+    {
+      "name": "default-release-ubuntu-latest",
+      "inherits": "default-release",
+      "displayName": "Default x64 Release",
+      "description": "Release x64 build using the default generator",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "/home/runner/Qt/6.4.3/gcc_64/lib/cmake"
+      }
+    }
+  ]
+}

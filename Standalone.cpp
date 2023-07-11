@@ -15,9 +15,9 @@
 #include "Workflows/DarwinKernel.h"
 
 #ifdef UI_BUILD
-#include "uitypes.h"
+#include "binaryninja-api/ui/uitypes.h"
 #include "UI/TypeSetter.h"
-#include "uicontext.h"
+#include "binaryninja-api/ui/uicontext.h"
 
 #endif
 

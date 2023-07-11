@@ -51,7 +51,11 @@ Ref<Type> TypeSetter::ClassTypeForContext(UIActionContext ctx)
             return nullptr;
     }
 
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
     auto undoID = data->BeginUndoActions();
+#else
+    data->BeginUndoActions();
+#endif
 
     Ref<Type> classType;
 
@@ -76,7 +80,11 @@ Ref<Type> TypeSetter::ClassTypeForContext(UIActionContext ctx)
         storedData->classes.push_back(className);
         storedData->classQualNames[className] = assignedName.GetString();
     }
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
     data->CommitUndoActions(undoID);
+#else
+    data->CommitUndoActions();
+#endif
     data->StoreMetadata(TypeSetterViewMetadataKey, storedData->AsMetadata());
 
     return classType;
@@ -85,7 +93,11 @@ Ref<Type> TypeSetter::ClassTypeForContext(UIActionContext ctx)
 
 bool TypeSetter::TypeWithExternalMethod(Ref<BinaryView> data, Ref<Function> func, Ref<Type> type)
 {
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
     auto undoID = data->BeginUndoActions();
+#else
+    data->BeginUndoActions();
+#endif
 
     Ref<Type> ioReturnType = data->GetTypeByName(QualifiedName("IOReturn"));
     if (!ioReturnType)
@@ -122,14 +134,23 @@ bool TypeSetter::TypeWithExternalMethod(Ref<BinaryView> data, Ref<Function> func
 
     func->Reanalyze();
 
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
     data->CommitUndoActions(undoID);
+#else
+    data->CommitUndoActions();
+#endif
 
     return true;
 }
 
 bool TypeSetter::SetThisArgType(Ref<BinaryView> data, Ref<Function> func, Ref<Type> type)
 {
+
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
     auto undoID = data->BeginUndoActions();
+#else
+    data->BeginUndoActions();
+#endif
 
     auto params = func->GetParameterVariables();
     if (params->empty())
@@ -144,12 +165,23 @@ bool TypeSetter::SetThisArgType(Ref<BinaryView> data, Ref<Function> func, Ref<Ty
             func->SetUserType(funcType);
         }
         func->Reanalyze();
+
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
         data->CommitUndoActions(undoID);
+#else
+        data->CommitUndoActions();
+#endif
         return true;
     }
 
     func->CreateUserVariable(params->at(0), Type::PointerType(8, type), "this");
 
     func->Reanalyze();
+#if (BN_CURRENT_CORE_ABI_VERSION >= 36)
     data->CommitUndoActions(undoID);
+#else
+    data->CommitUndoActions();
+#endif
+
+    return true;
 }

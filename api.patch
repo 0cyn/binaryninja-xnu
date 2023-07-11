@@ -1,0 +1,91 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3fe70f98..58eb2946 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -23,10 +23,20 @@ add_library(binaryninjaapi STATIC ${BN_API_SOURCES})
+ target_include_directories(binaryninjaapi
+     PUBLIC ${PROJECT_SOURCE_DIR})
+ 
+-find_package(BinaryNinjaCore REQUIRED)
+-target_link_libraries(binaryninjaapi PUBLIC ${BinaryNinjaCore_LIBRARIES})
+-target_link_directories(binaryninjaapi PUBLIC ${BinaryNinjaCore_LIBRARY_DIRS})
+-target_compile_definitions(binaryninjaapi PUBLIC ${BinaryNinjaCore_DEFINITIONS})
++find_package(BinaryNinjaCore)
++if(BinaryNinjaCore_FOUND)
++    target_link_libraries(binaryninjaapi PUBLIC ${BinaryNinjaCore_LIBRARIES})
++    target_link_directories(binaryninjaapi PUBLIC ${BinaryNinjaCore_LIBRARY_DIRS})
++    target_compile_definitions(binaryninjaapi PUBLIC ${BinaryNinjaCore_DEFINITIONS})
++else()
++    if(APPLE)
++        target_link_options(binaryninjaapi PUBLIC -undefined dynamic_lookup)
++    elseif(MSVC)
++        target_link_options(binaryninjaapi PUBLIC "LINKER:/FORCE:UNRESOLVED")
++    else()
++        target_link_options(binaryninjaapi PUBLIC "LINKER:--allow-shlib-undefined")
++    endif()
++endif()
+ 
+ set_target_properties(binaryninjaapi PROPERTIES
+     CXX_STANDARD 17
+@@ -36,32 +46,6 @@ set_target_properties(binaryninjaapi PROPERTIES
+     POSITION_INDEPENDENT_CODE ON
+     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/out)
+ 
+-if(NOT HEADLESS)
+-    if(NOT BN_INTERNAL_BUILD)
+-        # For backwards compatibility, include binaryninjaui in the api module
+-        # If you don't need it, you can safely ignore these warnings
+-
+-        find_package(BinaryNinjaUI)
+-        if(BinaryNinjaUI_FOUND)
+-            # Precompiled ui library
+-            add_library(binaryninjaui INTERFACE)
+-            target_link_libraries(binaryninjaui INTERFACE ${BinaryNinjaUI_LIBRARIES})
+-            target_link_directories(binaryninjaui INTERFACE ${BinaryNinjaUI_LIBRARY_DIRS})
+-            target_compile_definitions(binaryninjaui INTERFACE ${BinaryNinjaUI_DEFINITIONS})
+-
+-            # UI headers are in here
+-            target_include_directories(binaryninjaui INTERFACE ${PROJECT_SOURCE_DIR}/ui)
+-        else()
+-            # Add a fake target for binaryninjaui to intentionally break anything that tries to link against it,
+-            # since the find script failed and your build would otherwise break in less obvious places.
+-            add_custom_target(binaryninjaui
+-                COMMAND ${CMAKE_COMMAND} -E false)
+-            message(WARNING "Binary Ninja UI not found but -DHEADLESS was not specified. You will not be able to build UI plugins.")
+-        endif()
+-    else()
+-        # Nothing
+-    endif()
+-endif()
+ 
+ function(bn_install_plugin target)
+     if(NOT BN_INTERNAL_BUILD)
+@@ -71,16 +55,18 @@ function(bn_install_plugin target)
+         list(APPEND CMAKE_MODULE_PATH "${BN_API_SOURCE_DIR}/cmake")
+ 
+         # BinaryNinjaCore has the user plugins dir define that we want
+-        find_package(BinaryNinjaCore REQUIRED)
+-        if(WIN32)
+-            install(TARGETS ${target} RUNTIME
+-                DESTINATION ${BinaryNinjaCore_USER_PLUGINS_DIR})
+-
+-            install(FILES $<TARGET_PDB_FILE:${target}>
+-                DESTINATION ${BinaryNinjaCore_USER_PLUGINS_DIR} OPTIONAL)
+-        else()
+-            install(TARGETS ${target} LIBRARY
+-                DESTINATION ${BinaryNinjaCore_USER_PLUGINS_DIR})
++        find_package(BinaryNinjaCore)
++        if(BinaryNinjaCore_FOUND)
++            if(WIN32)
++                install(TARGETS ${target} RUNTIME
++                    DESTINATION ${BinaryNinjaCore_USER_PLUGINS_DIR})
++
++                install(FILES $<TARGET_PDB_FILE:${target}>
++                    DESTINATION ${BinaryNinjaCore_USER_PLUGINS_DIR} OPTIONAL)
++            else()
++                install(TARGETS ${target} LIBRARY
++                    DESTINATION ${BinaryNinjaCore_USER_PLUGINS_DIR})
++            endif()
+         endif()
+     endif()
+ endfunction()

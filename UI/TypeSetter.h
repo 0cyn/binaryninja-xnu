@@ -3,7 +3,7 @@
 //
 
 #include "Types.h"
-#include "action.h"
+#include "binaryninja-api/ui/action.h"
 #include "libkbinja/MetadataSerializable.hpp"
 
 #ifndef KSUITE_TYPESETTER_H
