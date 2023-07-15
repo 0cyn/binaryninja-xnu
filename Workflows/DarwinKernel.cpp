@@ -17,6 +17,9 @@ void DarwinKernelWorkflow::FixBrokenSIMD(Ref<AnalysisContext> ctx)
 
         const auto func = ctx->GetFunction();
         const auto arch = func->GetArchitecture();
+        if (arch->GetName() != "aarch64")
+            return;
+
         const auto bv = func->GetView();
 
         const auto llil = ctx->GetLowLevelILFunction();
@@ -82,6 +85,9 @@ DarwinKernelWorkflow::RewritePacInstructions (Ref<AnalysisContext> ctx) {
     try {
         const auto func = ctx->GetFunction() ;
         const auto arch = func->GetArchitecture() ;
+        if (arch->GetName() != "aarch64")
+            return;
+
         const auto bv = func->GetView() ;
 
         const auto llil = ctx->GetLowLevelILFunction() ;

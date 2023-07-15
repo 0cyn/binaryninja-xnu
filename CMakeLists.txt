@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 # Plugin Name
 set(PLUGIN_NAME binaryninja-xnu)
 
-set(PLUGIN_SOURCE Standalone.cpp Workflows/DarwinKernel.cpp Workflows/DarwinKernel.h )
+set(PLUGIN_SOURCE Standalone.cpp Workflows/DarwinKernel.cpp Workflows/DarwinKernel.h CPP/CPPTypeHelper.cpp CPP/CPPTypeHelper.h CPP/Types.h )
 set(UI_PLUGIN_SOURCE UI/TypeSetter.cpp UI/TypeSetter.h )
 
 # Non-user-serviceable parts below ---------------------------------------------

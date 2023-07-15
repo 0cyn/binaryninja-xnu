@@ -13,6 +13,7 @@
 
 // Core
 #include "Workflows/DarwinKernel.h"
+#include "CPP/CPPTypeHelper.h"
 
 #ifdef UI_BUILD
 #include "binaryninja-api/ui/uitypes.h"
@@ -36,17 +37,43 @@ namespace BinaryNinjaXNU {
         virtual void OnContextOpen(UIContext* context) override
         {
             context->globalActions()->bindAction(MAKE_ACTION_NAME(Types, External Method), UIAction([](const UIActionContext& ctx){
-                auto type = TypeSetter::ClassTypeForContext(ctx);
-                if (type)
+                auto helper = new CPPTypeHelper(ctx.binaryView);
+                if (auto type = helper->GetClassTypeForFunction(ctx.function))
                 {
-                    TypeSetter::TypeWithExternalMethod(ctx.binaryView, ctx.function, type);
+                    helper->SetExternalMethodType(ctx.function, type);
                 }
             }));
             context->globalActions()->bindAction(MAKE_ACTION_NAME(Types, Set this), UIAction([](const UIActionContext& ctx){
-                auto type = TypeSetter::ClassTypeForContext(ctx);
-                if (type)
+                auto helper = new CPPTypeHelper(ctx.binaryView);
+                if (auto type = helper->GetClassTypeForFunction(ctx.function))
                 {
-                    TypeSetter::SetThisArgType(ctx.binaryView, ctx.function, type);
+                    helper->SetThisArgType(ctx.function, type);
+                }
+            }));
+            context->globalActions()->bindAction(MAKE_ACTION_NAME(Types, Analyze), UIAction([](const UIActionContext& ctx){
+                if (ctx.binaryView)
+                {
+                    auto helper = new CPPTypeHelper(ctx.binaryView);
+                    auto classes = helper->FetchClasses();
+                    for (auto& c : classes)
+                    {
+                        /*
+                        BNLogInfo("Class: %s", c.name.c_str());
+                        for (auto& s : c.superclasses)
+                            BNLogInfo("  Superclass: %s", s.c_str());
+                        for (auto& it : c.vtable)
+                        {
+                            std::string name;
+                            if (auto sym = ctx.binaryView->GetSymbolByAddress(it.second))
+                                name = sym->GetShortName();
+                            if (name.empty())
+                                if (auto sym = ctx.binaryView->GetSymbolByAddress(c.vtableStart + 0x10 + it.first))
+                                    name = sym->GetShortName();
+                            BNLogInfo("  0x%llx = %s", it.first, name.c_str());
+                        }
+                         */
+                        helper->CreateTypeForClass(c);
+                    }
                 }
             }));
         }

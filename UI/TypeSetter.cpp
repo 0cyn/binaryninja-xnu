@@ -3,6 +3,7 @@
 //
 
 #include "TypeSetter.h"
+#include "../CPP/CPPTypeHelper.h"
 
 std::vector<std::string> split(const std::string& s, char seperator)
 {
